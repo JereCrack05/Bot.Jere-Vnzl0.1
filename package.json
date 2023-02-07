@@ -1,7 +1,7 @@
 {
-    "name": "NotJhuz-MD",
+    "name": "BotJere_vnzl",
     "version": "1.0.0",
-    "description": "Regalame tu sub en YouTube uwu",
+    "description": "Espero que lo disfrutes",
     "main": "index.js",
     "type": "module",
     "directories": {
@@ -16,7 +16,7 @@
     },
     "homepage": "https://github.com/IdkJhus",
     "author": {
-        "name": "NotJhuz"
+        "name": "Jere_vnzl"
     },
     "repository": {
         "type": "git",
