@@ -1,261 +1,260 @@
-
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as  crypto from 'crypto'
-import { ffmpeg } from './converter.js'
-import fluent_ffmpeg from 'fluent-ffmpeg'
-import { spawn } from 'child_process'
-import uploadFile from './uploadFile.js'
-import uploadImage from './uploadImage.js'
-import { fileTypeFromBuffer } from 'file-type'
-import webp from 'node-webpmux'
-import fetch from 'node-fetch'
+importar {dirname} desde 'ruta'
+importar {fileURLToPath} desde 'url'
+importar * como fs desde 'fs'
+importar * como ruta desde 'ruta'
+importar * como criptografía desde 'cripto'
+importar {ffmpeg} desde './converter.js'
+importar fluent_ffmpeg desde 'fluent-ffmpeg'
+importar {spawn} desde 'child_process'
+importar uploadFile desde './uploadFile.js'
+importar uploadImage desde './uploadImage.js'
+importar {fileTypeFromBuffer} desde 'tipo de archivo'
+importar webp desde 'node-webpmux'
+importar buscar desde 'node-fetch'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const tmp = path.join(__dirname, '../tmp')
+const tmp = ruta.join(__dirname, '../tmp')
 /**
- * Image to Sticker
- * @param {Buffer} img Image Buffer
- * @param {String} url Image URL
+ * Imagen a la etiqueta
+ * @param {Buffer} Búfer de imagen img
+ * @param {String} url URL de la imagen
  */
-function sticker2(img, url) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (url) {
-        let res = await fetch(url)
+función sticker2(img, url) {
+  devolver nueva promesa (async (resolver, rechazar) => {
+    intentar {
+      si (url) {
+        let res = esperar a buscar (url)
         if (res.status !== 200) throw await res.text()
-        img = await res.buffer()
+        img = esperar res.buffer()
       }
-      let inp = path.join(tmp, +new Date + '.jpeg')
-      await fs.promises.writeFile(inp, img)
+      let inp = path.join(tmp, +nueva fecha + '.jpeg')
+      esperar fs.promises.writeFile(inp, img)
       let ff = spawn('ffmpeg', [
         '-y',
-        '-i', inp,
-        '-vf', 'scale=512:512:flags=lanczos:force_original_aspect_ratio=decrease,format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=#00000000,setsar=1',
+        '-i', entrada,
+        '-vf', 'scale=512:512:flags=lanczos:force_original_aspect_ratio=decrease,format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=#00000000 ,setsar=1',
         '-f', 'png',
         '-'
       ])
-      ff.on('error', reject)
-      ff.on('close', async () => {
-        await fs.promises.unlink(inp)
+      ff.on('error', rechazar)
+      ff.on('cerrar', asíncrono () => {
+        esperar fs.promises.unlink(inp)
       })
       let bufs = []
-      const [_spawnprocess, ..._spawnargs] = [...(module.exports.support.gm ? ['gm'] : module.exports.magick ? ['magick'] : []), 'convert', 'png:-', 'webp:-']
+      const [_spawnprocess, ..._spawnargs] = [...(module.exports.support.gm ? ['gm'] : module.exports.magick ? ['magick'] : []), 'convert', ' png:-', 'webp:-']
       let im = spawn(_spawnprocess, _spawnargs)
       im.on('error', e => conn.reply(m.chat, util.format(e), m))
-      im.stdout.on('data', chunk => bufs.push(chunk))
-      ff.stdout.pipe(im.stdin)
-      im.on('exit', () => {
+      im.stdout.on('datos', fragmento => bufs.push(fragmento))
+      ff.stdout.tubería (im.stdin)
+      im.on('salir', () => {
         resolve(Buffer.concat(bufs))
       })
-    } catch (e) {
-      reject(e)
+    } atrapar (e) {
+      rechazar
     }
   })
 }
 
-async function canvas(code, type = 'png', quality = 0.92) {
+lienzo de función asíncrona (código, tipo = 'png', calidad = 0.92) {
   let res = await fetch('https://nurutomo.herokuapp.com/api/canvas?' + queryURL({
-    type,
-    quality
+    tipo,
+    calidad
   }), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain',
-      'Content-Length': code.length
+    método: 'POST',
+    encabezados: {
+      'Tipo de contenido': 'texto/sin formato',
+      'Contenido-Longitud': código.longitud
     },
-    body: code
+    cuerpo: código
   })
-  let image = await res.buffer()
-  return image
+  dejar imagen = esperar res.buffer()
+  imagen de retorno
 }
 
-function queryURL(queries) {
-  return new URLSearchParams(Object.entries(queries))
+function consultaURL(consultas) {
+  devolver nuevos URLSearchParams(Object.entries(consultas))
 }
 
 /**
- * Image to Sticker
- * @param {Buffer} img Image Buffer
- * @param {String} url Image URL
+ * Imagen a la etiqueta
+ * @param {Buffer} Búfer de imagen img
+ * @param {String} url URL de la imagen
  */
-async function sticker1(img, url) {
-  url = url ? url : await uploadImage(img)
-  let {
-    mime
-  } = url ? { mime: 'image/jpeg' } : await fileTypeFromBuffer(img)
+función asíncrona sticker1 (img, url) {
+  url = url? url: espera uploadImage (img)
+  dejar {
+    mímica
+  } = URL? { mime: 'image/jpeg' } : espera fileTypeFromBuffer(img)
   let sc = `let im = await loadImg('data:${mime};base64,'+(await window.loadToDataURI('${url}')))
-c.width = c.height = 512
-let max = Math.max(im.width, im.height)
-let w = 512 * im.width / max
-let h = 512 * im.height / max
+c.ancho = c.alto = 512
+let max = Math.max(im.ancho, im.alto)
+sea ​​w = 512 * im.width / max
+sea ​​h = 512 * altura im./máx.
 ctx.drawImage(im, 256 - w / 2, 256 - h / 2, w, h)
 `
-  return await canvas(sc, 'webp')
+  volver esperar lienzo (sc, 'webp')
 }
 
 /**
- * Image/Video to Sticker
- * @param {Buffer} img Image/Video Buffer
- * @param {String} url Image/Video URL
- * @param {String} packname EXIF Packname
- * @param {String} author EXIF Author
+ * Imagen/Video a Etiqueta
+ * @param {Buffer} img Búfer de imagen/video
+ * @param {String} url URL de imagen/video
+ * @param {String} nombre del paquete EXIF ​​Nombre del paquete
+ * @param {String} autor EXIF ​​Autor
  */
-async function sticker3(img, url, packname, author) {
-  url = url ? url : await uploadFile(img)
+función asíncrona sticker3 (img, url, nombre del paquete, autor) {
+  url = url? url: espera uploadFile (img)
   let res = await fetch('https://api.xteam.xyz/sticker/wm?' + new URLSearchParams(Object.entries({
-    url,
-    packname,
-    author
+    URL,
+    nombre del paquete,
+    autor
   })))
-  return await res.buffer()
+  volver esperar res.buffer()
 }
 
 /**
- * Image to Sticker
- * @param {Buffer} img Image/Video Buffer
- * @param {String} url Image/Video URL
+ * Imagen a la etiqueta
+ * @param {Buffer} img Búfer de imagen/video
+ * @param {String} url URL de imagen/video
  */
-async function sticker4(img, url) {
-  if (url) {
-    let res = await fetch(url)
+función asíncrona sticker4 (img, url) {
+  si (url) {
+    let res = esperar a buscar (url)
     if (res.status !== 200) throw await res.text()
-    img = await res.buffer()
+    img = esperar res.buffer()
   }
-  return await ffmpeg(img, [
-    '-vf', 'scale=512:512:flags=lanczos:force_original_aspect_ratio=decrease,format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=#00000000,setsar=1'
+  volver esperar ffmpeg(img, [
+    '-vf', 'scale=512:512:flags=lanczos:force_original_aspect_ratio=decrease,format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=#00000000 ,setsar=1'
   ], 'jpeg', 'webp')
 }
 
-async function sticker5(img, url, packname, author, categories = [''], extra = {}) {
-  const { Sticker } = await import('wa-sticker-formatter')
+función asíncrona sticker5(img, url, nombre del paquete, autor, categorías = [''], extra = {}) {
+  const {Pegatina} = esperar importación('wa-sticker-formatter')
   const stickerMetadata = {
-    type: 'default',
-    pack: packname,
-    author,
-    categories,
+    tipo: 'predeterminado',
+    paquete: nombre del paquete,
+    autor,
+    categorías,
     ...extra
   }
-  return (new Sticker(img ? img : url, stickerMetadata)).toBuffer()
+  return (nueva Etiqueta(img ? img : url, stickerMetadata)).toBuffer()
 }
 
 /**
- * Convert using fluent-ffmpeg
- * @param {string} img 
- * @param {string} url 
+ * Convertir usando ffmpeg fluido
+ * @param {cadena} img
+ * @param {cadena} URL
  */
-function sticker6(img, url) {
-  return new Promise(async (resolve, reject) => {
-    if (url) {
-      let res = await fetch(url)
+función sticker6(img, url) {
+  devolver nueva promesa (async (resolver, rechazar) => {
+    si (url) {
+      let res = esperar a buscar (url)
       if (res.status !== 200) throw await res.text()
-      img = await res.buffer()
+      img = esperar res.buffer()
     }
-    const type = await fileTypeFromBuffer(img) || {
-      mime: 'application/octet-stream',
+    const tipo = esperar fileTypeFromBuffer(img) || {
+      mime: 'aplicación/flujo de octetos',
       ext: 'bin'
     }
-    if (type.ext == 'bin') reject(img)
-    const tmp = path.join(__dirname, `../tmp/${+ new Date()}.${type.ext}`)
-    const out = path.join(tmp + '.webp')
-    await fs.promises.writeFile(tmp, img)
+    if (tipo.ext == 'bin') rechazo (img)
+    const tmp = ruta.join(__dirname, `../tmp/${+ nueva Fecha()}.${tipo.ext}`)
+    const out = ruta.join(tmp + '.webp')
+    esperar fs.promises.writeFile(tmp, img)
     // https://github.com/MhankBarBar/termux-wabot/blob/main/index.js#L313#L368
-    let Fffmpeg = /video/i.test(type.mime) ? fluent_ffmpeg(tmp).inputFormat(type.ext) : fluent_ffmpeg(tmp).input(tmp)
-    Fffmpeg
-      .on('error', function (err) {
-        console.error(err)
+    let Fffmpeg = /video/i.test(type.mime) ? fluent_ffmpeg(tmp).inputFormat(tipo.ext) : fluent_ffmpeg(tmp).input(tmp)
+    ffmpeg
+      .on('error', función (err) {
+        consola.error(err)
         fs.promises.unlink(tmp)
-        reject(img)
+        rechazar (img)
       })
-      .on('end', async function () {
+      .on('fin', función asíncrona () {
         fs.promises.unlink(tmp)
-        resolve(await fs.promises.readFile(out))
+        resolver (esperar fs.promises.readFile (fuera))
       })
       .addOutputOptions([
         `-vcodec`, `libwebp`, `-vf`,
-        `scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse`
+        `scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a ][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletause`
       ])
       .toFormat('webp')
-      .save(out)
+      .guardar (fuera)
   })
 }
 /**
- * Add WhatsApp JSON Exif Metadata
- * Taken from https://github.com/pedroslopez/whatsapp-web.js/pull/527/files
- * @param {Buffer} webpSticker 
- * @param {String} packname 
- * @param {String} author 
- * @param {String} categories 
- * @param {Object} extra 
- * @returns 
+ * Agregar Metadatos Exif JSON de WhatsApp
+ * Tomado de https://github.com/pedroslopez/whatsapp-web.js/pull/527/files
+ * @param {Búfer} webpSticker
+ * @param {String} nombre del paquete
+ * @param {String} autor
+ * @param {String} categorías
+ * @param {Objeto} adicional
+ * @devoluciones
  */
-async function addExif(webpSticker, packname, author, categories = [''], extra = {}) {
-  const img = new webp.Image();
+función asíncrona addExif(webpSticker, nombre del paquete, autor, categorías = [''], extra = {}) {
+  const img = new webp.Imagen();
   const stickerPackId = crypto.randomBytes(32).toString('hex');
-  const json = { 'sticker-pack-id': stickerPackId, 'sticker-pack-name': packname, 'sticker-pack-publisher': author, 'emojis': categories, ...extra };
-  let exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
+  const json = { 'sticker-pack-id': stickerPackId, 'sticker-pack-name': packname, 'sticker-pack-publisher': autor, 'emojis': categorías, ...extra };
+  let exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x016, 0x016, 0x016 0x00]);
   let jsonBuffer = Buffer.from(JSON.stringify(json), 'utf8');
   let exif = Buffer.concat([exifAttr, jsonBuffer]);
-  exif.writeUIntLE(jsonBuffer.length, 14, 4);
-  await img.load(webpSticker)
-  img.exif = exif
-  return await img.save(null)
+  Exif.writeUIntLE(jsonBuffer.longitud, 14, 4);
+  esperar img.load (webpSticker)
+  img.exif = EXIF
+  volver esperar img.save (null)
 }
 
 /**
- * Image/Video to Sticker
- * @param {Buffer} img Image/Video Buffer
- * @param {String} url Image/Video URL
- * @param {...String} 
+ * Imagen/Video a Etiqueta
+ * @param {Buffer} img Búfer de imagen/video
+ * @param {String} url URL de imagen/video
+ * @param {... Cadena}
 */
-async function sticker(img, url, ...args) {
+etiqueta de función asíncrona (img, url, ...args) {
   let lastError, stiker
-  for (let func of [
-    sticker3, global.support.ffmpeg && sticker6, sticker5,
+  para (let func of [
+    pegatina3, global.support.ffmpeg && pegatina6, pegatina5,
     global.support.ffmpeg && global.support.ffmpegWebp && sticker4,
     global.support.ffmpeg && (global.support.convert || global.support.magick || global.support.gm) && sticker2,
-    sticker1
-  ].filter(f => f)) {
-    try {
-      stiker = await func(img, url, ...args)
-      if (stiker.includes('html')) continue
-      if (stiker.includes('WEBP')) {
-        try {
-          return await addExif(stiker, ...args)
-        } catch (e) {
-          console.error(e)
-          return stiker
+    pegatina1
+  ].filtro(f => f)) {
+    intentar {
+      stiker = await func(img, url, ...argumentos)
+      si (stiker.includes('html')) continuar
+      if (etiqueta.incluye('WEBP')) {
+        intentar {
+          volver esperar addExif(stiker, ...args)
+        } atrapar (e) {
+          consola.error(e)
+          pegatina de vuelta
         }
       }
-      throw stiker.toString()
-    } catch (err) {
-      lastError = err
-      continue
+      tirar adhesivo.toString()
+    } atrapar (err) {
+      ultimoError = err
+      continuar
     }
   }
-  console.error(lastError)
-  return lastError
+  consola.error(últimoError)
+  devolver último error
 }
 
-const support = {
-  ffmpeg: true,
-  ffprobe: true,
-  ffmpegWebp: true,
-  convert: true,
-  magick: false,
-  gm: false,
-  find: false
+apoyo constante = {
+  ffmpeg: cierto,
+  ffsonda: cierto,
+  ffmpegWebp: verdadero,
+  convertir: verdadero,
+  magia: falso,
+  gm: falso,
+  encontrar: falso
 }
 
-export {
-  sticker,
-  sticker1,
-  sticker2,
-  sticker3,
-  sticker4,
-  sticker6,
-  addExif,
-  support
+exportar {
+  pegatina,
+  pegatina1,
+  pegatina2,
+  pegatina3,
+  pegatina4,
+  pegatina6,
+  agregarExif,
+  apoyo
 }
