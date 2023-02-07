@@ -27,11 +27,3 @@ exportar  función asíncrona  todo ( m , chatUpdate ) {
     }
     esto _ ev . emitir ( 'mensajes.upsert' ,  mensaje )
 }
-Pie de página
-© 2023 GitHub, Inc.
-Pie de página de navegación
-Términos
-Privacidad
-Seguridad
-Estado
-Documentos
